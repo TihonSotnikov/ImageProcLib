@@ -1,6 +1,8 @@
 #ifndef PROC_H
 #define PROC_H
 
+#include <stdio.h>
+
 typedef enum
 {
     PNG,
