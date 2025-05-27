@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "imageproc.h"
 
-ImageProcStatus load_image(const char* filename, Image* image, ImageFormat format);
-ImageProcStatus save_image(const char* filename, Image* image, ImageFormat format);
+ImageProcStatus load_image(const char* file_name, Image* image, ImageFormat file_format);
+ImageProcStatus save_image(const char* file_name, Image* image, ImageFormat file_format);
 
 #endif

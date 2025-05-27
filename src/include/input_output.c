@@ -37,7 +37,7 @@ void write_to_file_contextual(void *context, void *data, int size)
 
     // Если количество записаных байт отличается от изначального размера блока,
     // это ошибка записи (не все байты были записаны)
-    if (size != (int)written_size)
+    if ((size_t)size != written_size)
     {
         op_context->io_error = 1; // поднимаем флаг ошибки 
     }
@@ -63,35 +63,35 @@ ImageProcStatus free_image_data(Image* image)
 
 // @brief Загружает изображение из файла в структуру Image.
 //        Предварительно освобождает потенциальные мусорные данные из Image.
-//        Поддерживает форматы PNG и JPEG. Если указан UNKNOWN, функция возвращает ошибку.
+//        Поддерживает форматы файла PNG и JPEG. Если указан UNKNOWN, функция возвращает ошибку.
 // 
-// @param filename [in]  Строковое значение пути к файлу хранящему изображение.
-// @param image    [out] Указатель на структуру Image, которая будет заполнена данными загруженного изображения.
-//                       Память для image->data выделяется в stbi_load_from_file и далее освобождается с помощью free_image_data.
-// @param format   [in]  Ожидаемый формат изображения в файле (PNG или JPEG).
-//                       Если формат UNKNOWN, функция вернет UNSUPPORTED_FORMAT.
+// @param file_name   [in]  Строковое значение пути к файлу хранящему изображение.
+// @param image       [out] Указатель на структуру Image, которая будет заполнена данными загруженного изображения.
+//                          Память для image->data выделяется в stbi_load_from_file и далее освобождается с помощью free_image_data.
+// @param file_format [in]  Ожидаемый формат изображения в файле (PNG или JPEG).
+//                          Если формат UNKNOWN, функция вернет UNSUPPORTED_FORMAT.
 //
-// @return INVALID_ARGUMENT   Указатели на filename или !image равны NULL.
+// @return INVALID_ARGUMENT   Указатели на file_name или !image равны NULL.
 //                            format является неопределенным в структурах форматом.
 // @return UNSUPPORTED_FORMAT Формат изображения UNKNOWN.
 //                            Количество цветовых каналов после загрузки изображения с помощью stbi_load_from_file
 //                            Не поддерживается 
-// @return FILE_NOT_FOUND     file после открытия равен NULL.
+// @return FILE_NOT_FOUND     Файл после открытия равен NULL.
 // @return FILE_READ          Указатель на данные файла равен NULL.
-// @return SUCCESS            Изображение было успешно считано из файла и записано в структуру 
-ImageProcStatus load_image(const char* filename, Image* image, ImageFormat format)
+// @return SUCCESS            Изображение было успешно считано из файла и записано в структуру.
+ImageProcStatus load_image(const char* file_name, Image* image, ImageFormat file_format)
 {   
     free_image_data(image); // Очищаем от потенциальных мусорных данных
 
-    if (!filename || !image || (format != PNG && format != JPEG && format != UNKNOWN)) return INVALID_ARGUMENT;
+    if (!file_name || !image || (file_format != PNG && file_format != JPEG && file_format != UNKNOWN)) return INVALID_ARGUMENT;
 
-    if (format == UNKNOWN)
+    if (file_format == UNKNOWN)
     {
         return UNSUPPORTED_FORMAT;
     }
 
     // Открываем файл в бинарном режиме для чтения для дальнейшей работы с ним с помощью stbi_load_from_file
-    FILE* file = fopen(filename, "rb");
+    FILE* file = fopen(file_name, "rb");
     if (!file) return FILE_NOT_FOUND;
 
     int width, height, channels;
@@ -115,7 +115,7 @@ ImageProcStatus load_image(const char* filename, Image* image, ImageFormat forma
     }
     
     // Заполнение структуры Image данными загружаемого изображения 
-    image->format = format;
+    image->format = file_format;
     image->width = (size_t)width;
     image->height = (size_t)height;
     image->channels = channels; // Неявное преобразование Int в ImageColorChannels.
@@ -129,14 +129,14 @@ ImageProcStatus load_image(const char* filename, Image* image, ImageFormat forma
 
 // @brief Сохраняет изображение из структуры Image в файл.
 //        Далее свобождает память структуры.
-//        В случае ошибок записи удаляет поврежденный файл.
+//        В случае ошибок записи также удаляет поврежденный файл.
 //
-// @param filename [in] Строковое значение пути к файлу в который нужно сохранить изображение.
-// @param image    [in] Указатель на структуру изоражения сохраняемого в файл.
-// @param format   [in] Формат изображения.
-//                      При несовпадении формата изображения и формата файла возвращается ошибка.
+// @param file_name   [in] Строковое значение пути к файлу в который нужно сохранить изображение.
+// @param image       [in] Указатель на структуру изоражения сохраняемого в файл.
+// @param file_format [in] Формат файла.
+//                         При несовпадении формата изображения и формата файла возвращается ошибка.
 //
-// @return INVALID_ARGUMENT   Указатели на filename, image равны NULL.
+// @return INVALID_ARGUMENT   Указатели на file_name, image равны NULL.
 //                            Указатель на image->data равен NULL.
 //                            Формат изображения не соответствует форматам определенным в структуре.
 // @return UNSUPPORTED_FORMAT Формат изображения не поддерживается (UNKNOWN).
@@ -148,18 +148,18 @@ ImageProcStatus load_image(const char* filename, Image* image, ImageFormat forma
 // @return SUCCESS            Изображение успешно сохранено в файл, память освобождена.
 //
 // @note В случае любой ошибки (кроме INVALID_ARGUMENT и UNSUPPORTED_FORMAT) потенциально поврежденный файл будет удален 
-ImageProcStatus save_image(const char* filename, Image* image, ImageFormat format)
+ImageProcStatus save_image(const char* file_name, Image* image, ImageFormat file_format)
 {
-    if (!filename || !image || !image->data || (format != PNG && format != JPEG && format != UNKNOWN)) return INVALID_ARGUMENT;
+    if (!file_name || !image || !image->data || (file_format != PNG && file_format != JPEG && file_format != UNKNOWN)) return INVALID_ARGUMENT;
 
-    if (format == UNKNOWN)
+    if (file_format == UNKNOWN)
     {   
         free_image_data(image); // в случае некорректного формата изображения освобождаем его память 
         return UNSUPPORTED_FORMAT;
     }
 
     // Открываем файл в режиме бинарного чтения для последующей записи изображения в него с помощью stbi_write
-    FILE* file = fopen(filename, "wb");
+    FILE* file = fopen(file_name, "wb");
 
     if (!file)
     {
@@ -176,7 +176,7 @@ ImageProcStatus save_image(const char* filename, Image* image, ImageFormat forma
                      // 1 - нет ошибок 
                      // 2 - наличие ошибки 
 
-    if (format == PNG)
+    if (file_format == PNG)
     {
         stb_res = stbi_write_png_to_func(
             write_to_file_contextual, 
@@ -192,7 +192,7 @@ ImageProcStatus save_image(const char* filename, Image* image, ImageFormat forma
     // В stb JPEG имеет 3 канала, возможные некорректные записи в файл при GRAYSCALE. //
     // Если будут баги при сохранении, скорее всего ошибка в этом.                    //
     ////////////////////////////////////////////////////////////////////////////////////
-    else if (format == JPEG)
+    else if (file_format == JPEG)
     {
         stb_res = stbi_write_jpg_to_func(
             write_to_file_contextual, 
@@ -212,7 +212,7 @@ ImageProcStatus save_image(const char* filename, Image* image, ImageFormat forma
     {
         free_image_data(image);
         fclose(file);
-        remove(filename);
+        remove(file_name);
         return FILE_WRITE;
     }
 
@@ -222,7 +222,7 @@ ImageProcStatus save_image(const char* filename, Image* image, ImageFormat forma
     {
         free_image_data(image);
         fclose(file);
-        remove(filename);
+        remove(file_name);
         return INTERNAL;
     }
 
