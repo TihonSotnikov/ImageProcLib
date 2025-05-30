@@ -22,7 +22,6 @@ typedef struct
     size_t height;
     ImageColorChannels channels;
     unsigned char* data;
-    // size_t stride; // мб понадобится, но не факт - фактическая длина строки изображения (изображения могут быть выровнены по опред. границе памяти). Желательно не использовать.
 } Image;
 
 typedef enum

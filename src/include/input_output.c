@@ -64,7 +64,10 @@ ImageProcStatus free_image_data(Image* image)
 // @brief Загружает изображение из файла в структуру Image.
 //        Предварительно освобождает потенциальные мусорные данные из Image.
 //        Поддерживает форматы файла PNG и JPEG. Если указан UNKNOWN, функция возвращает ошибку.
-// 
+//        Изображение хранится в row-major порядке.
+//        Если в изображении больше одного канала, значения каждого канала для определенного пикселя хранится построчно, подряд.
+//        Пример хранения данных (для RGB): R1G1B1, R2G2B2 ... R9G9B9, R10G10B10 ...
+//        
 // @param file_name   [in]  Строковое значение пути к файлу хранящему изображение.
 // @param image       [out] Указатель на структуру Image, которая будет заполнена данными загруженного изображения.
 //                          Память для image->data выделяется в stbi_load_from_file и далее освобождается с помощью free_image_data.
@@ -79,7 +82,7 @@ ImageProcStatus free_image_data(Image* image)
 // @return FILE_NOT_FOUND     Файл после открытия равен NULL.
 // @return FILE_READ          Указатель на данные файла равен NULL.
 // @return SUCCESS            Изображение было успешно считано из файла и записано в структуру.
-ImageProcStatus load_image(const char* file_name, Image* image, ImageFormat file_format)
+ImageProcStatus load_image(const char* file_name, Image* image, const ImageFormat file_format)
 {   
     free_image_data(image); // Очищаем от потенциальных мусорных данных
 
@@ -148,7 +151,7 @@ ImageProcStatus load_image(const char* file_name, Image* image, ImageFormat file
 // @return SUCCESS            Изображение успешно сохранено в файл, память освобождена.
 //
 // @note В случае любой ошибки (кроме INVALID_ARGUMENT и UNSUPPORTED_FORMAT) потенциально поврежденный файл будет удален 
-ImageProcStatus save_image(const char* file_name, Image* image, ImageFormat file_format)
+ImageProcStatus save_image(const char* file_name, Image* image, const ImageFormat file_format)
 {
     if (!file_name || !image || !image->data || (file_format != PNG && file_format != JPEG && file_format != UNKNOWN)) return INVALID_ARGUMENT;
 
