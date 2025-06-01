@@ -7,7 +7,7 @@ typedef enum
 {
     PNG,
     JPEG, 
-    UNKNOWN
+    UNKNOWN // неподдерживаемый / неопределенный формат
 } ImageFormat;
 
 typedef enum
@@ -24,13 +24,12 @@ typedef struct
     size_t height;
     ImageColorChannels channels;
     unsigned char* data;
-    // size_t stride; // мб понадобится, но не факт - фактическая длина строки изображения (изображения могут быть выровнены по опред. границе памяти). Желательно не использовать.
 } Image;
 
 typedef enum
 {
     SUCCESS = 0,        
-    INVALID_ARGUMENT,   // некорректный аргумент
+    INVALID_ARGUMENT,   // некорректный / недопустимый аргумент
     FILE_NOT_FOUND,     // не найден файл
     FILE_ACCESS_DENIED, // нет прав доступа к файлу (чтение / запись)
     FILE_READ,          // ошибка во время чтения файла 
