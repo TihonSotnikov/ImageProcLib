@@ -1,0 +1,1 @@
+gcc -fopenmp -O2 -I./include/ src/main.c src/imageproc_A.c src/imageproc_B.c src/input_output.c -o imgproc.exe

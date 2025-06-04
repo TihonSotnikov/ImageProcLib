@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <omp.h>
 
 // @brief Округляет значение float и приводит его к диапазону unsigned char [0, 255].
 //
@@ -20,15 +21,6 @@ unsigned char to_uchar(float value)
 // ------------------------------
 // ---- ГАУССОВАЯ ФИЛЬТРАЦИЯ ----
 // ------------------------------
-
-
-// @brief Структура для представления одномерного гауссова ядра свертки.
-//        Ядро симметрично и нормализовано (сумма коэффициентов равна 1).
-typedef struct
-{
-    float* values; // Указатель на массив коэффициентов ядра.
-    int radius;    // Радиус ядра (количество элементов от центра до края).
-} Kernel;
 
 // @brief Создает одномерное симметричное гауссово ядро свертки.
 //        Значения вычисляются по формуле G(i) = exp(-i^2 / (2 * sigma^2))
@@ -95,22 +87,25 @@ void free_kernel(Kernel* kernel)
 // @param kernel      [in]  Указатель на структуру Kernel, содержащую ядро свертки.
 void horizontal_convolution(const unsigned char* input_data, unsigned char* output_data, const int channels, const size_t width, const size_t height, const Kernel* kernel)
 {
-    for (size_t i = 0; i < height; i++) // Итерация по каждой строке изображения
+    #pragma omp parallel for
+    for (int channel = 0; channel < channels; channel++) // Итерация по каждому цветовому каналу
     {
-        for (size_t j = 0; j < width; j++) // Итерация по каждому пикселю (столбцу) в строке
+        for (size_t i = 0; i < height; i++) // Итерация по каждой строке изображения
         {
-            for (int channel = 0; channel < channels; channel++) // Итерация по каждому цветовому каналу
+            for (size_t j = 0; j < width; j++) // Итерация по каждому пикселю (столбцу) в строке
             {
-                float weighted_sum = 0.0f; // Аккумулятор для взвешенной суммы значений пикселей
+                float weighted_sum = 0.0f;                                             // Аккумулятор для взвешенной суммы значений пикселей
                 for (int offset = -kernel->radius; offset <= kernel->radius; offset++) // Итерация по элементам ядра
                 {
                     // Вычисляем координату соседнего пикселя по горизонтали
                     int neighbor_col = (int)j + offset;
 
                     // Обработка границ: отражение (clamp to edge)
-                    if (neighbor_col < 0) neighbor_col = 0;
-                    else if (neighbor_col >= (int)width) neighbor_col = (int)width - 1;
-                    
+                    if (neighbor_col < 0)
+                        neighbor_col = 0;
+                    else if (neighbor_col >= (int)width)
+                        neighbor_col = (int)width - 1;
+
                     // Индекс пикселя в одномерном массиве input_data
                     size_t pixel_idx_in_data = (i * width + (size_t)neighbor_col) * channels + channel;
                     // Коэффициент ядра (значение ядра для текущего смещения)
@@ -136,22 +131,25 @@ void horizontal_convolution(const unsigned char* input_data, unsigned char* outp
 // @param kernel      [in]  Указатель на структуру Kernel, содержащую ядро свертки.
 void vertical_convolution(const unsigned char* input_data, unsigned char* output_data, const int channels, const size_t width, const size_t height, const Kernel* kernel)
 {
-    for (size_t i = 0; i < height; i++) // Итерация по каждой строке изображения
+    #pragma omp parallel for
+    for (int channel = 0; channel < channels; channel++) // Итерация по каждому цветовому каналу
     {
-        for (size_t j = 0; j < width; j++) // Итерация по каждому пикселю (столбцу) в строке
+        for (size_t i = 0; i < height; i++) // Итерация по каждой строке изображения
         {
-            for (int channel = 0; channel < channels; channel++) // Итерация по каждому цветовому каналу
+            for (size_t j = 0; j < width; j++) // Итерация по каждому пикселю (столбцу) в строке
             {
-                float weighted_sum = 0.0f; // Аккумулятор для взвешенной суммы
+                float weighted_sum = 0.0f;                                             // Аккумулятор для взвешенной суммы
                 for (int offset = -kernel->radius; offset <= kernel->radius; offset++) // Итерация по элементам ядра
                 {
                     // Вычисляем координату соседнего пикселя по вертикали
                     int neighbor_row = (int)i + offset;
 
                     // Обработка границ: отражение (clamp to edge)
-                    if (neighbor_row < 0) neighbor_row = 0;
-                    else if (neighbor_row >= (int)height) neighbor_row = (int)height - 1;
-                    
+                    if (neighbor_row < 0)
+                        neighbor_row = 0;
+                    else if (neighbor_row >= (int)height)
+                        neighbor_row = (int)height - 1;
+
                     // Индекс пикселя в одномерном массиве input_data
                     size_t pixel_idx_in_data = ((size_t)neighbor_row * width + j) * channels + channel;
                     // Коэффициент ядра
