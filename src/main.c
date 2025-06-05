@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
         }
         else if (argv[p][0] >= '0' && argv[p][0] <= '9')
         {
-            sscanf(argv[p], "%f", &PARAMETERS[PCNT++]);
+            if (PCNT < 4) sscanf(argv[p], "%f", &PARAMETERS[PCNT++]);
         }
         else if (TOOL == UNSPECIFIED && strcmp(argv[p], "gauss") == 0) TOOL = GAUSS;
         else if (TOOL == UNSPECIFIED && strcmp(argv[p], "median") == 0) TOOL = MEDIAN;

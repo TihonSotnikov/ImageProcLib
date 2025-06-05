@@ -98,7 +98,6 @@ ImageProcStatus ipl_median_filter(Image *image, const int radius)
             }
             source[i_offset + (width-1)*chan + c] = get_median(histogram[c], win_area);
         }
-        
     }
 
     printf("Median filter finished.\n");
